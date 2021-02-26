@@ -7,15 +7,27 @@ function App() {
   const [tasks, setTasks] = useState([])
   const [editMode, setEditMode]= useState(false)
   const [id, setId]= useState("")
+  const [error,setError]= useState(null)
 
-  const addTask =(e) => {
-    e.preventDefault() /*para evitar ue nos recargue la pagina por el sudmit  */
-    /*para validar  si un campo este vacido o no esta vacido varias  
-    formas  podemos utilizar una librerias lodash  desde la terminar  cargamos el loash. yarn add lodash*/
+  const validForm = () => {
+    let isValid = true
+    setError(null)
+
     if(isEmpty(task)){
-      console.log("Task empty")
+      setError("Debes de ingresar una Tarea.")
+      isValid =false
       return
     } 
+     return isValid
+  }
+  
+  const addTask =(e) => {
+    e.preventDefault() 
+       if (!validForm()){
+         return
+       }
+
+
      const newTask = {
        id: shortid.generate(),
        name: task
@@ -28,10 +40,9 @@ function App() {
   const saveTask =(e) => {
     e.preventDefault() 
 
-    if(isEmpty(task)){
-      console.log("Task empty")
+    if (!validForm()){
       return
-    } 
+    }
      const editedTasks = tasks.map(item =>item.id=== id ? {id, name : task} : item)
      setTasks(editedTasks)
      setEditMode(false)
@@ -62,7 +73,7 @@ function App() {
              
                   {  
                size(tasks) == 0 ?(
-                  <h5 className= "text-center">AUN NO HAY TAREAS PROGRAMADAS.</h5>
+                  <li className= "list-group-item">AUN NO HAY TAREAS PROGRAMADAS.</li>
                   ): (
                     <ul className="list-group">
                        {
@@ -94,6 +105,10 @@ function App() {
             </h4>
             
             <form onSubmit={editMode ? saveTask : addTask }> 
+
+            {
+             error && <span className="text-danger mb-2">{error}</span>
+            } 
               <input
                 type="text"
                 className="form-control mb-2"
@@ -102,7 +117,8 @@ function App() {
                 onChange={(text)=> setTask(text.target.value)}/* cuando   ingrese  algo en  tarea  
                 vamos  asginarle a la variale task */
                 value={task}/* limpiar la tarea  */
-              />     
+              />  
+               
             
             <button
              className={ editMode ? "btn btn-warning btn-block" : "btn btn-dark btn-block"}
