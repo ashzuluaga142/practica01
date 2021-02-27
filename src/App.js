@@ -1,6 +1,7 @@
 import { isEmpty, size } from 'lodash'
-import React, { useState }from 'react' /* importar  el primer estado hut */
-import shortid from 'shortid'
+import React, { useState, useEffect }from 'react' /* importar  el primer estado hut */
+
+import { addDocument, deleteeDocument, getCollection, updateDocument } from './actions'
 
 function App() {
   const [task, setTask]= useState("") /* cuando el  usuairo ingrese algo  */
@@ -8,6 +9,16 @@ function App() {
   const [editMode, setEditMode]= useState(false)
   const [id, setId]= useState("")
   const [error,setError]= useState(null)
+
+  useEffect(() => {
+  (async () => {
+    const result = await getCollection("tasks")
+    if (result.statusResponse) {
+      setTasks(result.data)
+    }
+    
+    })()
+  }, [])
 
   const validForm = () => {
     let isValid = true
@@ -21,28 +32,35 @@ function App() {
      return isValid
   }
   
-  const addTask =(e) => {
+  const addTask = async(e) => {
     e.preventDefault() 
        if (!validForm()){
          return
        }
-
-
-     const newTask = {
-       id: shortid.generate(),
-       name: task
-     }
-     setTasks([...tasks, newTask ])
+      const result = await addDocument ("tasks",{name: task})//adicionar tarea a la coleccion  de firebase
+       if (!result.statusResponse){
+         setError(result.error)
+         return
+       }
+     
+     setTasks([...tasks, {id: result.data.id, name: task } ])
 
      setTask("") /* despues de decir si  la tarea esta correcta lo vamos   a dejar nulo */
   }
 
-  const saveTask =(e) => {
+  const saveTask =async(e) => {
     e.preventDefault() 
 
     if (!validForm()){
       return
     }
+
+    const result = await updateDocument("tasks", id,{name: task})
+    if(!result.statusResponse){
+      setError(result.error)
+      return
+    }
+
      const editedTasks = tasks.map(item =>item.id=== id ? {id, name : task} : item)
      setTasks(editedTasks)
      setEditMode(false)
@@ -50,7 +68,12 @@ function App() {
      setId("")
   }
 
-  const deleteTask = (id) =>{
+  const deleteTask = async (id) =>{
+          const result = await deleteeDocument("tasks", id)
+          if(!result.statusResponse){
+            setError(result.error)
+            return
+          }
          const filterdTasks = tasks.filter(task => task.id !==id)
          setTasks(filterdTasks)
        }
